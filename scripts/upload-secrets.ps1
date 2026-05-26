@@ -16,7 +16,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "=== Uploading secrets and .env to $Target ===" -ForegroundColor Cyan
-scp -r secrets/* "${Target}:${RemoteDir}/secrets/"
+scp -r (Get-ChildItem secrets/* -Exclude *.example).FullName "${Target}:${RemoteDir}/secrets/"
 scp .env "${Target}:${RemoteDir}/"
 
 Write-Host "✓ Done!" -ForegroundColor Green

@@ -3,11 +3,20 @@
 # Stack stays running if build fails
 set -euo pipefail
 
-echo "=== Building images ==="
-if ! ./build.sh; then
-    echo ""
-    echo "✗ Build failed! Stack remains running." >&2
-    exit 1
+SKIP_BUILD=0
+if [ "${1:-}" == "--skip-build" ]; then
+    SKIP_BUILD=1
+fi
+
+if [ "$SKIP_BUILD" -eq 0 ]; then
+    echo "=== Building images ==="
+    if ! ./build.sh; then
+        echo ""
+        echo "✗ Build failed! Stack remains running." >&2
+        exit 1
+    fi
+else
+    echo "=== Skipping build phase ==="
 fi
 
 echo ""
