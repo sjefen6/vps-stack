@@ -1,0 +1,4 @@
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# Renew certs daily at 2am (Apache reload handled by deploy hook)
+0 2 * * * root certbot renew >> /proc/1/fd/1 2>&1

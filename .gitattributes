@@ -1,0 +1,7 @@
+* text=auto
+*.sh text eol=lf
+*.conf text eol=lf
+*.ini text eol=lf
+Dockerfile text eol=lf
+dockerfiles/apache-php/splitlog text eol=lf
+dockerfiles/backup/entrypoint.sh text eol=lf

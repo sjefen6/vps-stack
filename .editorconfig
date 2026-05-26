@@ -1,0 +1,42 @@
+# EditorConfig for VPS-Stack Docker project
+# https://editorconfig.org
+
+root = true
+
+# Default: Unix line endings, UTF-8, trailing whitespace cleanup
+[*]
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Shell scripts must have LF (Linux)
+[*.sh]
+indent_style = space
+indent_size = 4
+
+# YAML, Dockerfiles
+[{*.yaml,*.yml,Dockerfile*}]
+indent_style = space
+indent_size = 2
+
+# PHP
+[*.php]
+indent_style = space
+indent_size = 4
+
+# Apache config
+[*.conf]
+indent_style = space
+indent_size = 4
+
+# INI files
+[*.ini]
+indent_style = space
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+indent_style = space
+indent_size = 2

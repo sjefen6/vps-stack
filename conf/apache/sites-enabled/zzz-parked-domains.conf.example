@@ -1,0 +1,28 @@
+# Parked domains — add a Use ParkDomain line to park a domain with SSL
+# Requires: mod_macro, mod_rewrite, mod_ssl
+#
+# Each domain gets:
+#   - HTTP *:80 vhost: redirects all traffic to HTTPS
+#   - HTTPS *:443 vhost: serves /var/www/default/public_html with its own cert
+#
+# Cert must exist at /etc/letsencrypt/live/$domain/
+
+<Macro ParkDomain $domain>
+    <VirtualHost *:80>
+        ServerName $domain
+        ServerAlias *.$domain
+        Use HttpsRewrite
+    </VirtualHost>
+
+    <VirtualHost *:443>
+        ServerName $domain
+        ServerAlias *.$domain
+        Use StdDir /var/www/default/public_html
+        Use VhostLogSplit default
+        Use SslCert $domain
+    </VirtualHost>
+</Macro>
+
+# Examples:
+# Use ParkDomain example.com
+# Use ParkDomain example.net

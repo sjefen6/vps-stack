@@ -1,0 +1,52 @@
+#!/bin/bash
+# splitlog - splits piped Apache log output to stdout (docker logs) and one or more rotatelogs instances
+# Usage: splitlog <file> <size> <count> [<file2> <size2> <count2> ...]
+# Example: splitlog /var/log/apache2/sites/domain-access.log 10M 7 /mnt/backup/access.log 50M 3
+set -euo pipefail
+
+if [[ $# -eq 0 || $(( $# % 3 )) -ne 0 ]]; then
+    echo "splitlog: usage: splitlog <file> <size> <count> [...]" >&2
+    exit 1
+fi
+
+tmpdir=$(mktemp -d)
+pipes=()
+tmpfds=()
+cleanup() { rm -rf "$tmpdir"; }
+trap cleanup EXIT
+
+i=0
+while [[ $# -ge 3 ]]; do
+    file="$1"
+    size="$2"
+    count="$3"
+
+    if [[ -z "$file" || -z "$size" || -z "$count" ]]; then
+        echo "splitlog: empty argument not allowed" >&2
+        exit 1
+    fi
+
+    if ! [[ "$count" =~ ^[0-9]+$ ]]; then
+        echo "splitlog: rotation count must be numeric" >&2
+        exit 1
+    fi
+
+    pipe="$tmpdir/pipe$i"
+    mkfifo "$pipe"
+    # <> opens FIFO non-blocking; close tmpfd in child so rotatelogs does not hold its own write end
+    exec {tmpfd}<>"$pipe"
+    /usr/bin/rotatelogs -n "$count" "$file" "$size" < "$pipe" {tmpfd}>&- &
+    tmpfds+=("$tmpfd")
+    pipes+=("$pipe")
+    i=$(( i + 1 ))
+    shift 3
+done
+
+tee /proc/1/fd/1 "${pipes[@]}" >/dev/null
+
+# Close parent tmpfds so rotatelogs gets EOF
+for fd in "${tmpfds[@]}"; do
+    eval "exec ${fd}>&-"
+done
+
+wait

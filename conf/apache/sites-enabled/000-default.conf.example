@@ -1,0 +1,15 @@
+# Default/catch-all vhost — loaded first (000-) so Apache uses it as the fallback
+# for any hostname without a matching vhost. HTTP serves content directly (no redirect)
+# so domains without a cert still get a parking page.
+<VirtualHost *:80>
+    Use StdDir /var/www/default/public_html
+    Use VhostLogSplit default
+</VirtualHost>
+
+# Default HTTPS — catches SNI mismatches; uses primary cert as fallback
+<VirtualHost *:443>
+    Use StdDir /var/www/default/public_html
+    Use VhostLogSplit default
+    # Replace 'example.com' with your primary fallback certificate name
+    Use SslCert example.com
+</VirtualHost>

@@ -1,0 +1,75 @@
+#cloud-config
+
+# ==============================================================================
+#  YOUR SERVER DETAILS
+#  (Keep this exact block in a 1Password secure note and paste it over this top 
+#  section when provisioning a new server)
+# ==============================================================================
+hostname: web01
+fqdn: web01.example.com
+manage_etc_hosts: true
+
+users:
+  - name: your_username
+    shell: /bin/bash
+    groups: [sudo]
+    sudo: "ALL=(ALL:ALL) NOPASSWD:ALL"
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...replace_with_your_actual_public_key...
+
+# ==============================================================================
+#  SYSTEM CONFIGURATION (Do not modify below this line)
+# ==============================================================================
+packages:
+  - ufw
+  - ca-certificates
+  - curl
+
+package_update: true
+package_upgrade: true
+
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-hardening.conf
+    permissions: "0644"
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      PubkeyAuthentication yes
+
+  - path: /etc/docker/daemon.json
+    permissions: "0644"
+    content: |
+      {"userland-proxy": false}
+
+  - path: /root/install-docker.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/debian/gpg \
+        -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+        https://download.docker.com/linux/debian \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+        > /etc/apt/sources.list.d/docker.list
+      apt-get update -qq
+      apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-buildx-plugin
+      
+      # Dynamically add the main user (UID 1000) to the docker group
+      MAIN_USER=$(id -un 1000)
+      if [ -n "$MAIN_USER" ]; then
+        usermod -aG docker "$MAIN_USER"
+      fi
+
+runcmd:
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable
+  - bash /root/install-docker.sh
+  - systemctl reload ssh
+

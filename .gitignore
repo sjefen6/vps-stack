@@ -1,0 +1,30 @@
+# Secrets and Credentials
+.env
+secrets/*
+!secrets/*.example
+
+# Local Data and Logs
+www/
+logs/
+letsencrypt/
+db-dumps/
+db-export*
+
+# Site-Specific Configuration (Content)
+conf/apache/sites-enabled/*
+!conf/apache/sites-enabled/*.example
+
+# Legacy and Backups
+old/
+restore/
+*.bak
+*.tmp
+
+# OS and IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Internal config/prompts
+.github/

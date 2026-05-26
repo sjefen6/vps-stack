@@ -1,0 +1,83 @@
+name: vps-stack
+
+services:
+  apache-php:
+    build: ./dockerfiles/apache-php
+    image: vps-apache-php
+    pull_policy: never
+    container_name: vps-apache-php
+    ports:
+      - "${APACHE_IPV4:-0.0.0.0}:80:80"
+      - "${APACHE_IPV4:-0.0.0.0}:443:443"
+      - "[${APACHE_IPV6:-::}]:80:80"
+      - "[${APACHE_IPV6:-::}]:443:443"
+    volumes:
+      - ./www:/var/www
+      - ./conf/apache/httpd.conf:/etc/apache2/conf-enabled/httpd.conf:ro
+      - ./conf/apache/sites-enabled:/etc/apache2/sites-enabled:ro
+      - ./conf/php/php.ini:/usr/local/etc/php/conf.d/zzz-app.ini:ro
+      - ./conf/php/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+      - ./letsencrypt:/etc/letsencrypt:ro
+      - ./logs/apache:/var/log/apache2/sites
+    networks:
+      - frontend
+    environment:
+      - VPS_HOSTNAME=${VPS_HOSTNAME:-localhost}
+      - VPS_EMAIL_PUBLIC=${VPS_EMAIL_PUBLIC:-admin@example.com}
+    restart: unless-stopped
+
+  certbot:
+    build: ./dockerfiles/certbot
+    image: vps-certbot
+    pull_policy: never
+    container_name: vps-certbot
+    profiles: [production]
+    volumes:
+      - ./letsencrypt:/etc/letsencrypt
+      - ./secrets:/secrets:ro
+      - ./logs/certbot:/var/log/letsencrypt
+      - ./conf/cron.d:/etc/cron.d
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+  db:
+    build: ./dockerfiles/mariadb
+    image: vps-db
+    pull_policy: never
+    container_name: vps-db
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /secrets/db-root-password.txt
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./secrets:/secrets:ro
+      - ./db-dumps:/dumps:ro
+    networks:
+      - frontend
+    restart: unless-stopped
+
+  backup:
+    build: ./dockerfiles/backup
+    image: vps-backup
+    pull_policy: never
+    container_name: vps-backup
+    hostname: vps-backup
+    profiles: [production]
+    restart: unless-stopped
+    networks:
+      - frontend
+    volumes:
+      - .:/vps-stack:ro
+      - ./db-dumps:/vps-stack/db-dumps
+      - restic-cache:/root/.cache/restic
+    environment:
+      - TZ=Europe/Oslo
+      - BACKUP_SCHEDULE=0 2 * * *
+      # - BACKUP_TEST=1
+
+networks:
+  frontend:
+    enable_ipv6: true
+
+volumes:
+  db-data:
+  restic-cache:
