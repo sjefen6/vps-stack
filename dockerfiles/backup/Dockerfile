@@ -1,5 +1,6 @@
 FROM alpine:3.21
 
+ARG CACHE_BYPASS
 RUN apk add --no-cache \
     bash \
     restic \

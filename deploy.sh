@@ -3,28 +3,25 @@
 # Stack stays running if build fails
 set -euo pipefail
 
-SKIP_BUILD=0
-if [ "${1:-}" == "--skip-build" ]; then
-    SKIP_BUILD=1
-fi
+echo "=== Pulling external images ==="
+# We use --profile "*" so it doesn't ignore services like certbot/backup
+docker compose --profile "*" pull --ignore-buildable
 
-if [ "$SKIP_BUILD" -eq 0 ]; then
-    echo "=== Building images ==="
+if [ "${1:-}" != "--skip-build" ]; then
+    echo ""
+    echo "=== Building local images ==="
     if ! ./build.sh; then
         echo ""
-        echo "✗ Build failed! Stack remains running." >&2
+        echo "✗ Build failed!" >&2
         exit 1
     fi
 else
-    echo "=== Skipping build phase ==="
+    echo ""
+    echo "=== Skipping local build phase ==="
 fi
 
-echo ""
-echo "=== Pulling base images ==="
-docker compose pull --ignore-buildable
-
-echo ""
-echo "✓ Build successful, deploying..."
+# ── Phase 2: Host Filesystem Setup ───────────────────────────────────
+# Prepare directories and permissions before stopping the stack.
 
 echo ""
 echo "=== Fixing permissions ==="

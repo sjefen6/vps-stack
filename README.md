@@ -41,11 +41,14 @@ We use a universal PowerShell script to manage bi-directional syncing. It dynami
 Use the provided `cloudinit/cloud-init.yaml` when provisioning your VPS to automatically install Docker and harden the system.
 
 ### 2. Upload Rig & Secrets
-1. Clone your private fork of this repo (or the clean public version) to your workstation.
-2. Run `./scripts/op-sync.ps1 -Pull -Server "web01.example.com"` as described above to populate your local files.
-3. Upload the entire directory to your VPS:
+1. Clone this repository directly to your VPS:
    ```bash
-   scp -r ~/vps-stack user@vps-ip:~/
+   git clone https://github.com/sjefen6/vps-stack.git ~/vps-stack
+   ```
+2. Pull your secrets onto your local workstation using `./scripts/op-sync.ps1 -Pull -Server "web01.example.com"`.
+3. Upload your local secrets and `.env` to the VPS by running the upload script from your workstation:
+   ```powershell
+   ./scripts/upload-secrets.ps1 -Target user@vps-ip
    ```
 
 ### 3. Start the Stack
@@ -65,7 +68,7 @@ The `backup` service (enabled in `production` profile) automatically dumps datab
 1. Provision a new VPS.
 2. Clone this repo.
 3. Pull your secrets using `./scripts/op-sync.ps1 -Pull -Server "web01.example.com"` so Restic can access the vault credentials in `secrets/backup.ini`.
-4. Run the restore script on the VPS:
+4. Run the restore script on the VPS (it will automatically build its own helper container):
    ```bash
    ./scripts/restore-backup.sh . --delete
    ```

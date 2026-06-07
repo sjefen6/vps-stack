@@ -31,3 +31,14 @@ This happens because the shebang becomes `#!/bin/bash\r` and the kernel can't fi
   $bytes = $utf8NoBom.GetBytes($content)  # $content must use "`n" not "`r`n"
   [System.IO.File]::WriteAllBytes("path\to\file", $bytes)
   ```
+
+## Design Philosophy
+
+### 1. Fail Fast (Fail Loud, Fail Early)
+- Do not build silent fallback logic for missing or misconfigured critical environment variables (e.g., `VPS_HOSTNAME`, `MYSQL_ROOT_PASSWORD`).
+- If a required configuration is missing or empty, scripts must print a clear error message to `stderr` and exit immediately with status `1`.
+- In `compose.yaml`, use the required variable syntax `${VAR:?error_message}` to prevent the stack from starting if variables are missing from `.env`.
+
+### 2. Single Responsibility Principle (SRP)
+- Keep automated lifecycle/initialization scripts (like those running inside `/docker-entrypoint-initdb.d/`) strictly focused on their automated tasks.
+- Do not overload automated scripts to handle manual intervention or manual runs if it introduces unnecessary branching complexity (such as password file check branches). If a manual task is a separate concern, handle it separately.

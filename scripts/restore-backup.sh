@@ -2,8 +2,7 @@
 # Run a backup restore via the vps-backup Docker image.
 #
 # Prerequisites:
-#   The vps-backup image must be built:
-#     ./build.sh backup
+#   None (the script automatically builds the required Docker image).
 #
 # Usage:
 #   ./scripts/restore-backup.sh --snapshots                       # list available snapshots
@@ -15,21 +14,37 @@
 #                                                                  # container stays alive for inspection via exec
 #
 # After restore, files will be under:
-#   <target-dir>/vps-stack/          — full VPS-Stack directory
-#   <target-dir>/tmp/db-dumps/  — database SQL dumps
+#   <target-dir>/          — full VPS-Stack directory
+#   <target-dir>/db-dumps/  — database SQL dumps
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SECRETS_DIR="$REPO_ROOT/secrets"
 
+# Enforce VPS_HOSTNAME is configured in .env
+if [[ ! -f "$REPO_ROOT/.env" ]]; then
+    echo "ERROR: .env file not found at $REPO_ROOT" >&2
+    exit 1
+fi
+
+VPS_HOSTNAME=$(grep -E "^\s*VPS_HOSTNAME\s*=" "$REPO_ROOT/.env" | sed -E 's/^\s*[^=]+=\s*//' | tr -d '\r' | tr -d '"' | tr -d "'" | head -1)
+if [[ -z "$VPS_HOSTNAME" ]]; then
+    echo "ERROR: VPS_HOSTNAME is not configured in your .env file." >&2
+    exit 1
+fi
+
 if [[ ! -f "$SECRETS_DIR/backup.ini" ]]; then
     echo "ERROR: $SECRETS_DIR/backup.ini not found" >&2
     exit 1
 fi
 
+echo "=== Building backup/restore image ==="
+docker build -t vps-backup --build-arg CACHE_BYPASS="$(date +%Y%m)" "$REPO_ROOT/dockerfiles/backup"
+
 if [[ "${1:-}" == "--snapshots" ]]; then
     docker run --rm \
+        --hostname "$VPS_HOSTNAME" \
         --entrypoint /usr/local/bin/restore.sh \
         -v "$SECRETS_DIR:/vps-stack/secrets:ro" \
         -v restic-cache:/root/.cache/restic \
@@ -86,6 +101,7 @@ fi
 
 docker run --rm \
     --name vps-restore \
+    --hostname "$VPS_HOSTNAME" \
     --entrypoint /usr/local/bin/restore.sh \
     -e DELETE_EXTRA="$DELETE" \
     -v "$SECRETS_DIR:/vps-stack/secrets:ro" \

@@ -60,7 +60,7 @@ services:
     image: vps-backup
     pull_policy: never
     container_name: vps-backup
-    hostname: vps-backup
+    hostname: ${VPS_HOSTNAME:?VPS_HOSTNAME is required}
     profiles: [production]
     restart: unless-stopped
     networks:

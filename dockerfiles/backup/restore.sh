@@ -49,7 +49,7 @@ EXISTING_ENV=""
 RESTIC_EXTRA_FLAGS=""
 [[ "${DELETE_EXTRA:-0}" == "1" ]] && RESTIC_EXTRA_FLAGS="--delete"
 
-restic restore "$SNAPSHOT" --target /restore --json --no-lock --exclude=.git $RESTIC_EXTRA_FLAGS 2>&1 | tee -a "$LOG"
+restic restore "$SNAPSHOT" --target /restore --host "$(hostname)" --json --no-lock --exclude=.git $RESTIC_EXTRA_FLAGS 2>&1 | tee -a "$LOG"
 
 echo "" | tee -a "$LOG"
 echo "Completed: $(date)" | tee -a "$LOG"
