@@ -4,7 +4,14 @@
 set -euo pipefail
 
 DUMPS_DIR="/dumps"
-MYSQL_CMD="mariadb -u root"
+DB_PASS="${MARIADB_ROOT_PASSWORD:-${MYSQL_ROOT_PASSWORD:-}}"
+
+if [ -z "$DB_PASS" ]; then
+    echo "ERROR: Database root password not found in environment (MARIADB_ROOT_PASSWORD / MYSQL_ROOT_PASSWORD)." >&2
+    exit 1
+fi
+
+MYSQL_CMD="mariadb -u root -p$DB_PASS"
 
 echo "=== Restoring database dumps ==="
 
