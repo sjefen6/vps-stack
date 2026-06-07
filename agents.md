@@ -14,7 +14,11 @@ This happens because the shebang becomes `#!/bin/bash\r` and the kernel can't fi
 - ALL shell scripts and executable files must use LF (`\n`) only
 - After creating any script file on Windows, immediately fix it:
   ```powershell
-  (Get-Content "path\to\file" -Raw) -replace "`r`n", "`n" | Set-Content "path\to\file" -NoNewline
+  $path = "path\to\file"
+  $content = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
+  $content = $content -replace "`r`n", "`n"
+  $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+  [System.IO.File]::WriteAllBytes($path, $utf8NoBom.GetBytes($content))
   ```
 - `.gitattributes` covers `*.sh` and `Dockerfile` — but **extensionless scripts must be added explicitly**:
   ```

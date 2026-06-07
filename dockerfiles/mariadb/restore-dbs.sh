@@ -4,12 +4,7 @@
 set -euo pipefail
 
 DUMPS_DIR="/dumps"
-# Support password file (production) or env var (restore compose)
-if [ -f "/secrets/db-root-password.txt" ]; then
-    DB_PASS="$(cat /secrets/db-root-password.txt)"
-else
-    DB_PASS="${MARIADB_ROOT_PASSWORD:-${MYSQL_ROOT_PASSWORD:-}}"
-fi
+MYSQL_CMD="mariadb -u root"
 
 echo "=== Restoring database dumps ==="
 
@@ -33,12 +28,12 @@ for DUMP in "${DUMPS[@]}"; do
 
     if [ "$DB" = "grants" ]; then
         echo "Restoring users and grants..."
-        $READ_CMD | mariadb -u root -p"$DB_PASS"
+        $READ_CMD | $MYSQL_CMD
         echo "  ✓ grants restored"
     else
         echo "Restoring $DB..."
-        mariadb -u root -p"$DB_PASS" -e "CREATE DATABASE IF NOT EXISTS \`$DB\`;"
-        $READ_CMD | mariadb -u root -p"$DB_PASS" "$DB"
+        $MYSQL_CMD -e "CREATE DATABASE IF NOT EXISTS \`$DB\`;"
+        $READ_CMD | $MYSQL_CMD "$DB"
         echo "  ✓ $DB restored"
     fi
 done
