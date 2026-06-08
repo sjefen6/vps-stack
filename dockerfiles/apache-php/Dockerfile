@@ -33,8 +33,9 @@ RUN chmod +x /usr/local/bin/splitlog
 RUN a2enmod rewrite headers ssl macro \
     && a2dissite 000-default default-ssl
 
-# Remap www-data to UID/GID 1000 (host user) so PHP can write to bind-mounted
-# volumes without chmod hacks. The container still runs as www-data — it's just
-# that www-data IS UID 1000. Compatible with runAsNonRoot in Kubernetes.
+# Remap www-data to UID/GID 1000 (host user) so Apache/PHP worker processes 
+# can write to bind-mounted volumes without chmod hacks. The container itself 
+# starts as root (to bind to ports 80/443 and read SSL certs), but Apache 
+# spawns its web requests workers under the www-data user (UID 1000).
 RUN usermod  -u 1000 www-data \
  && groupmod -g 1000 www-data

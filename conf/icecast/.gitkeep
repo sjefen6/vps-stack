@@ -1,0 +1,7 @@
+# This directory holds the active, git-ignored icecast.xml configuration.
+#
+# To extract the default configuration template from the Docker image, run:
+#
+#   docker run -it --rm -v "${PWD}/conf/icecast:/dist" vps-icecast cp -i /etc/icecast.xml /dist/icecast.xml.example
+#
+# Then rename it to icecast.xml and modify as needed.

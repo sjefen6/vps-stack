@@ -64,6 +64,45 @@ write_files:
         usermod -aG docker "$MAIN_USER"
       fi
 
+  - path: /usr/local/bin/add-extra-ipv6.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # Automatically discover primary IPv6 and add X additional IPs
+      set -e
+
+      INTERFACE="eth0"
+      X=1 # Number of additional IPs to add
+
+      PRIMARY_IP=$(ip -6 addr show dev "$INTERFACE" scope global | grep -oE '[a-fA-F0-9:]+::1' | head -n 1 || true)
+      if [ -z "$PRIMARY_IP" ]; then
+        echo "ERROR: No primary IPv6 ending in ::1 found on $INTERFACE" >&2
+        exit 1
+      fi
+
+      PREFIX=$(echo "$PRIMARY_IP" | sed 's/1$//')
+
+      for i in $(seq 2 $((X + 1))); do
+        ip -6 addr add "${PREFIX}${i}/64" dev "$INTERFACE" || true
+      done
+
+  - path: /etc/systemd/system/add-extra-ipv6.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Add extra IPv6 addresses to eth0
+      After=network-online.target
+      Wants=network-online.target
+      Before=docker.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/add-extra-ipv6.sh
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=multi-user.target
+
 runcmd:
   - ufw default deny incoming
   - ufw default allow outgoing
@@ -73,4 +112,7 @@ runcmd:
   - ufw --force enable
   - bash /root/install-docker.sh
   - systemctl reload ssh
+  - systemctl daemon-reload
+  - systemctl enable --now add-extra-ipv6.service
+
 

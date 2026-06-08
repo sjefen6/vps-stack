@@ -13,6 +13,7 @@ db-export*
 # Site-Specific Configuration (Content)
 conf/apache/sites-enabled/*
 !conf/apache/sites-enabled/*.example
+conf/icecast/icecast.xml
 
 # Legacy and Backups
 old/

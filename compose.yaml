@@ -7,10 +7,10 @@ services:
     pull_policy: never
     container_name: vps-apache-php
     ports:
-      - "${APACHE_IPV4:-0.0.0.0}:80:80"
-      - "${APACHE_IPV4:-0.0.0.0}:443:443"
-      - "[${APACHE_IPV6:-::}]:80:80"
-      - "[${APACHE_IPV6:-::}]:443:443"
+      - "${VPS_IPV4:?VPS_IPV4 is required}:80:80"
+      - "${VPS_IPV4:?VPS_IPV4 is required}:443:443"
+      - "[${VPS_IPV6:?VPS_IPV6 is required}]:80:80"
+      - "[${VPS_IPV6:?VPS_IPV6 is required}]:443:443"
     volumes:
       - ./www:/var/www
       - ./conf/apache/httpd.conf:/etc/apache2/conf-enabled/httpd.conf:ro
@@ -26,17 +26,46 @@ services:
       - VPS_EMAIL_PUBLIC=${VPS_EMAIL_PUBLIC:-admin@example.com}
     restart: unless-stopped
 
+  icecast:
+    build: ./dockerfiles/icecast
+    image: vps-icecast
+    pull_policy: never
+    container_name: vps-icecast
+    ports:
+      # If you do not have a dedicated IPv4 address for Icecast, comment out these 4 IPv4 lines.
+      # Otherwise, binding to 0.0.0.0 will conflict with Apache on ports 80 and 443.
+      # - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:80:8000"
+      # - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:443:8443"
+      # - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:8000:8000"
+      # - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:44380:8443"
+      - "[${ICECAST_IPV6:?ICECAST_IPV6 is required}]:80:8000"
+      - "[${ICECAST_IPV6:?ICECAST_IPV6 is required}]:443:8443"
+      - "[${ICECAST_IPV6:?ICECAST_IPV6 is required}]:8000:8000"
+      - "[${ICECAST_IPV6:?ICECAST_IPV6 is required}]:44380:8443"
+    volumes:
+      - ./conf/icecast/icecast.xml:/etc/icecast.xml:ro
+      - ./letsencrypt:/etc/letsencrypt:ro
+      - ./logs/icecast:/var/log/icecast
+    networks:
+      - frontend
+    environment:
+      - ICECAST_CERT_NAME=${ICECAST_CERT_NAME:?ICECAST_CERT_NAME is required}
+    restart: unless-stopped
+
   certbot:
     build: ./dockerfiles/certbot
     image: vps-certbot
     pull_policy: never
     container_name: vps-certbot
     profiles: [production]
+    environment:
+      - ICECAST_CERT_NAME=${ICECAST_CERT_NAME:?ICECAST_CERT_NAME is required}
     volumes:
       - ./letsencrypt:/etc/letsencrypt
       - ./secrets:/secrets:ro
       - ./logs/certbot:/var/log/letsencrypt
       - ./conf/cron.d:/etc/cron.d
+      - ./conf/certbot/reload-containers.sh:/etc/letsencrypt/renewal-hooks/deploy/reload-containers.sh:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 
