@@ -34,10 +34,10 @@ services:
     ports:
       # If you do not have a dedicated IPv4 address for Icecast, comment out these 4 IPv4 lines.
       # Otherwise, binding to 0.0.0.0 will conflict with Apache on ports 80 and 443.
-      # - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:80:8000"
-      # - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:443:8443"
-      # - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:8000:8000"
-      # - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:44380:8443"
+      - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:80:8000"
+      - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:443:8443"
+      - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:8000:8000"
+      - "${ICECAST_IPV4:?ICECAST_IPV4 is required}:44380:8443"
       - "[${ICECAST_IPV6:?ICECAST_IPV6 is required}]:80:8000"
       - "[${ICECAST_IPV6:?ICECAST_IPV6 is required}]:443:8443"
       - "[${ICECAST_IPV6:?ICECAST_IPV6 is required}]:8000:8000"

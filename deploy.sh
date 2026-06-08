@@ -24,6 +24,10 @@ fi
 # Prepare directories and permissions before stopping the stack.
 
 echo ""
+echo "=== Configuring Host Networking ==="
+bash scripts/bind-extra-ips.sh
+
+echo ""
 echo "=== Fixing permissions ==="
 sudo chown -R 1000:1000 www/
 sudo chmod 600 secrets/*.ini secrets/*.txt 2>/dev/null || true
