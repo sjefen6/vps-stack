@@ -30,7 +30,8 @@ sudo chmod 600 secrets/*.ini secrets/*.txt 2>/dev/null || true
 
 echo ""
 echo "=== Ensuring log directories exist ==="
-mkdir -p logs/apache logs/certbot
+mkdir -p logs/apache logs/certbot logs/icecast
+sudo chown -R 1000:1000 logs/icecast
 
 echo ""
 echo "=== Stopping containers ==="
