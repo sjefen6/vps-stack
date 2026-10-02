@@ -80,4 +80,6 @@ for domain in "${DOMAINS[@]}"; do
     aaaaw=$(chk "foo.$domain" AAAA "$EXPECTED_AAAA")
     printf "%-22.22s %-18.18s %-40.40s %-6s %-14.14s %-5s %-4s %-4s %-4s %-5s\n" \
         "$domain" "${registrar:-?}" "${ns:-?}" "${dnssec:-?}" "$cert" "$days" "$a" "$aaaa" "$aw" "$aaaaw"
+    # Stay below RDAP.org's limit of 10 requests per 10 seconds.
+    sleep 1
 done
