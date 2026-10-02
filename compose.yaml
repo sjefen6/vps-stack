@@ -64,8 +64,6 @@ services:
       - ./letsencrypt:/etc/letsencrypt
       - ./secrets:/secrets:ro
       - ./logs/certbot:/var/log/letsencrypt
-      - ./conf/cron.d:/etc/cron.d
-      - ./conf/certbot/reload-containers.sh:/etc/letsencrypt/renewal-hooks/deploy/reload-containers.sh:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 
@@ -100,7 +98,6 @@ services:
       - restic-cache:/root/.cache/restic
     environment:
       - TZ=Europe/Oslo
-      - BACKUP_SCHEDULE=0 2 * * *
       # - BACKUP_TEST=1
 
 networks:

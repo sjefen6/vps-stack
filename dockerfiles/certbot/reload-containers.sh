@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+set -euo pipefail
 # This script is executed by Certbot upon successful certificate renewal.
 
 echo "Certificate renewed for: $RENEWED_DOMAINS"
@@ -13,10 +14,10 @@ if [ -z "${ICECAST_CERT_NAME:-}" ]; then
 fi
 
 # Only hard-restart Icecast if the stream certificate was the one that renewed
-# Certbot passes the renewed domains in the $RENEWED_DOMAINS environment variable
+# Match the certificate name from Certbot's renewed lineage path.
 TARGET_CERT="${ICECAST_CERT_NAME}"
-case "$RENEWED_DOMAINS" in
-    *"$TARGET_CERT"*)
+case "${RENEWED_LINEAGE##*/}" in
+    "$TARGET_CERT")
         echo "Stream certificate ($TARGET_CERT) renewed. Restarting Icecast..."
         docker restart vps-icecast
         ;;
