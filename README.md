@@ -2,6 +2,36 @@
 
 A professional Docker-based VPS-Stack stack designed for multi-service VPS environments. Features automated Restic backups to Backblaze B2, Certbot with DNS-01 challenges, and secret management via 1Password.
 
+[Update services](#update-services) · [Full-stack update](#full-stack-update) · [Deployment](#-deployment) · [Backup & Recovery](#-backup--recovery)
+
+## Updates
+
+Run these commands on the VPS from the repository directory.
+
+### Update services
+
+```bash
+git pull --ff-only
+./build.sh
+docker compose up -d --no-deps --force-recreate <service> [<service>...]
+docker compose logs --tail=50 <service>
+```
+
+Services: `apache-php`, `db`, `icecast`, `certbot`, `backup`. For example, `docker compose up -d --no-deps --force-recreate apache-php db` applies new images for Apache/PHP and MariaDB only.
+
+`./build.sh` pulls updated base images and builds all services, tagging each image with both `latest` and a timestamp (`YYYYMMDD-HHMM`). It does not restart containers. The `up` command recreates only the services you list, briefly interrupting them while the rest of the stack keeps running.
+
+Use the build script to preserve timestamp tags; a direct `docker compose build` only assigns the image name configured in Compose (`latest` in this stack). Timestamp tags retain references to previous builds; Compose deploys `latest` by default.
+
+### Full-stack update
+
+```bash
+git pull --ff-only
+./deploy.sh
+```
+
+`./deploy.sh` calls `./build.sh`, then stops and recreates the stack. All services are interrupted during recreation. Use `./deploy.sh --skip-build` only when you intentionally want to deploy images already built locally; it does not refresh their base images.
+
 ---
 
 ## 🔐 Secret Management
