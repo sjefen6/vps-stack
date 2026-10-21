@@ -9,7 +9,8 @@ DATE_TAG=$(date +%Y%m%d-%H%M)
 echo "=== Building images (Tag: latest, $DATE_TAG) ==="
 # Pass monthly CACHE_BYPASS token to automatically invalidate cached installs once a month.
 # Use --profile "*" to ensure services with profiles (like backup/certbot) are included.
-docker compose --profile "*" build --build-arg CACHE_BYPASS="$(date +%Y%m)" --parallel
+# Refresh base images so deployments pick up upstream security updates.
+docker compose --profile "*" build --pull --build-arg CACHE_BYPASS="$(date +%Y%m)" --parallel
 
 echo ""
 echo "=== Applying datestamp tags ==="
