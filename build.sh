@@ -3,6 +3,7 @@ set -euo pipefail
 
 # Usage: ./build.sh
 # Builds all services and tags them with datestamp.
+# Does not restart containers. See README.md#update-services to apply new images.
 
 DATE_TAG=$(date +%Y%m%d-%H%M)
 
