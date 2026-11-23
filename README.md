@@ -60,6 +60,39 @@ cd ~/vps-stack
 
 ---
 
+## MariaDB updates and system-table upgrades
+
+The database image is pinned to `mariadb:13.0`, the series already deployed on the VPS. Builds pull patch updates within that series; moving to another series requires an explicit Dockerfile change and review of MariaDB's upgrade instructions. Do not downgrade an existing data volume to an older server series.
+
+Compose sets `MARIADB_AUTO_UPGRADE=1`. On startup, the official entrypoint checks the existing data directory and runs `mariadb-upgrade` when required, before accepting normal connections. This also repairs installations that already run 13.0 with older system tables (for example, `mysql.proc` from 12.2). Allow extra startup time for the upgrade.
+
+The entrypoint keeps a pre-upgrade system-database backup named `system_mysql_backup_*.sql.zst` inside the database volume. Do not set `MARIADB_DISABLE_UPGRADE_BACKUP`. This system-table backup is not a full application-data backup, and the nightly Restic job does not directly back up the Docker database volume.
+
+Before the first deployment of this fix or a deliberate series upgrade, take a verified full database backup. If logical dumps are already failing, stop the database and take a cold copy or storage snapshot of its data volume before proceeding; copying live database files is not a consistent backup.
+
+After taking that safety copy, build and recreate the database from the repository directory:
+
+```bash
+git pull --ff-only
+./build.sh
+docker compose up -d --no-deps --force-recreate db
+docker compose logs --tail=100 -f db
+```
+
+Wait for successful upgrade completion and `ready for connections`, then leave the log view with Ctrl-C. Verify the routine query that previously broke backups (the command reads the existing password file inside the container):
+
+```bash
+docker compose exec db sh -c 'MYSQL_PWD="$(cat /secrets/db-root-password.txt)" mariadb -uroot -e "SELECT VERSION(); SHOW FUNCTION STATUS;"'
+```
+
+Then rerun the production backup, which performs database dumps followed by the Restic upload and retention steps, and confirm success:
+
+```bash
+docker compose exec backup /usr/local/bin/backup.sh
+```
+
+See the [official MariaDB image upgrade settings](https://mariadb.com/docs/server/server-management/automated-mariadb-deployment-and-administration/docker-and-mariadb/mariadb-server-docker-official-image-environment-variables) for details.
+
 ## 📦 Backup & Recovery
 
 The `backup` service (enabled in `production` profile) automatically dumps databases and creates an encrypted Restic snapshot of the entire `/vps-stack` directory (including secrets) every night.

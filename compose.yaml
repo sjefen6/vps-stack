@@ -74,6 +74,9 @@ services:
     container_name: vps-db
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /secrets/db-root-password.txt
+      # Upgrade existing system tables before serving connections after image updates.
+      # Keep the official entrypoint's pre-upgrade system-table backup enabled.
+      MARIADB_AUTO_UPGRADE: "1"
     volumes:
       - db-data:/var/lib/mysql
       - ./secrets:/secrets:ro
